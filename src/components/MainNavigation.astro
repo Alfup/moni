@@ -1,0 +1,158 @@
+---
+const routeNames = [
+   "ARB",
+   "BASE",
+   "BSC",
+   "ETH",
+   "MULT",
+   "POL",
+   "SOL",
+   "TRON"
+];
+
+const currentPath = Astro.url.pathname;
+const currentIndex = routeNames.findIndex(route => 
+   currentPath.includes(route.toLowerCase())
+);
+
+// Calculate balanced indices
+const indices = routeNames.map((_, i) => {
+   const distance = i - currentIndex;
+   const totalItems = routeNames.length;
+   const halfItems = Math.floor(totalItems / 2);
+   
+   // Shift indices to keep selected item centered
+   let adjustedIndex = distance;
+   if (distance > halfItems) {
+      adjustedIndex = distance - totalItems;
+   } else if (distance < -halfItems) {
+      adjustedIndex = distance + totalItems;
+   }
+   
+   return adjustedIndex;
+});
+---
+
+<nav>
+   <div class="nav-container">
+      <div class="nav-track">
+         {routeNames.map((route, i) => {
+            const index = indices[i];
+            return (
+               <div 
+                  class="nav-item"
+                  style={`--index: ${index}; --total: ${routeNames.length}`}
+               >
+                  <a
+                     aria-current={currentPath.includes(route.toLowerCase()) ? "page" : null}
+                     href={`/${route.toLowerCase()}`}
+                     style={`--distance: ${Math.abs(index)}`}
+                  >
+                     {route}
+                  </a>
+               </div>
+            );
+         })}
+      </div>
+   </div>
+</nav>
+
+<style lang="scss">
+   nav {
+      width: 100%;
+      height: 120px;
+      perspective: 1200px;
+      transform-style: preserve-3d;
+      z-index: 100;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+
+      .nav-container {
+         position: relative;
+         width: 100%;
+         height: 100%;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         transform-style: preserve-3d;
+      }
+
+      .nav-track {
+         position: absolute;
+         bottom: 2rem;
+         transform-style: preserve-3d;
+         pointer-events: auto;
+         width: 100%;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+      }
+
+      .nav-item {
+         position: absolute;
+         transform-style: preserve-3d;
+         --radius: 300px;
+         --angle: calc(var(--index) * 22.5deg);
+         transform: 
+            rotateY(var(--angle))
+            translateZ(var(--radius))
+            rotateY(calc(-1 * var(--angle)));
+         transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      a {
+         text-decoration: none;
+         color: rgba(255, 255, 255, 0.6);
+         font-size: clamp(0.875rem, 2vw + 0.5rem, 1.125rem);
+         padding: 0.5em 0.75em;
+         white-space: nowrap;
+         transition: all 0.3s ease;
+         display: block;
+         text-align: center;
+         position: relative;
+         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+         opacity: calc(1 - var(--distance) * 0.15);
+         transform: scale(calc(1 - var(--distance) * 0.1));
+         
+         &:hover {
+            color: rgba(255, 255, 255, 0.9);
+            transform: scale(calc(1.1 - var(--distance) * 0.1));
+         }
+
+         &[aria-current="page"] {
+            color: rgba(255, 255, 255, 1);
+            font-weight: bold;
+            transform: scale(1.1);
+            text-shadow: 
+               0 0 20px rgba(255, 255, 255, 0.3),
+               0 2px 4px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+            
+            &::after {
+               content: '';
+               position: absolute;
+               bottom: -0.5rem;
+               left: 50%;
+               transform: translateX(-50%);
+               width: 4px;
+               height: 4px;
+               background: white;
+               border-radius: 50%;
+               box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            }
+         }
+      }
+
+      @media (max-width: 768px) {
+         height: 100px;
+         
+         .nav-track {
+            bottom: 1rem;
+         }
+
+         .nav-item {
+            --radius: 200px;
+         }
+      }
+   }
+</style>

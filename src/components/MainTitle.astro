@@ -1,0 +1,29 @@
+<h1><slot /></h1>
+
+<style lang="scss">
+   h1 {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: max(6vh, calc(50% - 1em - 45vmin));
+      font-size: clamp(1.75rem, 3vw + 1rem, 4rem); // Adjusted for better mobile scaling
+      text-transform: uppercase;
+      letter-spacing: 0.25ch; // Reduced letter spacing for mobile
+      padding-left: 0.25ch;
+      font-weight: normal;
+      z-index: 1;
+      text-align: center; // Center text for mobile
+      width: 90%; // Prevent text overflow on small screens
+      margin: 0 auto;
+
+      background: linear-gradient(to top, hsl(0deg 0% 20%), white 120%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 0.8ch hsla(0deg 0% 100% / 35%);
+
+      @media (max-width: 768px) {
+         top: 5vh; // Move title higher on mobile
+         letter-spacing: 0.15ch; // Further reduce spacing on mobile
+      }
+   }
+</style>
