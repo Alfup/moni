@@ -1,0 +1,30 @@
+<footer>
+   <slot />
+</footer>
+
+<style is:global>
+   footer {
+      position: absolute;
+      width: 100%;
+      bottom: 0;
+      padding: 1.5em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5em;
+      font-size: clamp(1rem, 1.333vh + 0.25rem, 1.25rem);
+   }
+
+   @media (min-width: 1000px) and (orientation: landscape) {
+      footer {
+         align-items: end;
+      }
+
+      nav {
+         position: absolute;
+         bottom: 1rem;
+         left: 50%;
+         transform: translateX(-50%);
+      }
+   }
+</style>

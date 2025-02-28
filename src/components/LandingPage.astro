@@ -1,0 +1,92 @@
+---
+import Canvas from "./Canvas.astro";
+import CryptoTable from "./CryptoTable.astro";
+import CommunitySection from "./CommunitySection.astro";
+import RoadmapSection from "./RoadmapSection.astro";
+import MainNavigation from "./MainNavigation.astro";
+import Header from "./Header.astro";
+
+interface Props {
+  cryptoData: any;
+  displayTitle: string;
+  colo: "yes" | "no";
+}
+
+const { cryptoData, displayTitle, colo } = Astro.props;
+---
+
+<div class="min-h-screen bg-space-black text-space-text-light">
+  <Header />
+  
+  <!-- Intro Section -->
+  <div class="w-full py-20 text-center">
+    <h1 class="text-4xl md:text-5xl lg:text-6xl text-space-text-light mb-4 tracking-tight">
+      UAP.money
+    </h1>
+    <p class="text-xl md:text-2xl text-space-text italic tracking-tight">
+      The International Alien Payment
+    </p>
+  </div>
+
+  <!-- Planet Viewer Section -->
+  <section id="planets" class="relative h-screen">
+    <div class="absolute inset-0 border border-space-silver/20 backdrop-blur-sm rounded-lg m-4">
+      <div class="planet-title absolute left-1/2 -translate-x-1/2 top-[max(6vh,calc(50%-1em-45vmin))] text-[clamp(1.75rem,3vw+1rem,4rem)] font-normal z-10 text-center w-[90%] mx-auto bg-gradient-to-t from-[hsl(0,0%,20%)] to-white to-120% bg-clip-text text-transparent [text-shadow:0_0_0.8ch_hsla(0,0%,100%,0.35)] md:top-[5vh] tracking-tight">
+        {displayTitle}
+      </div>
+      
+      {colo === "no" && (
+        <div class="locked-indicator absolute left-1/2 -translate-x-1/2 top-[max(15vh,calc(50%-1em-30vmin))] text-[clamp(3.5rem,6vw+2rem,8rem)] font-bold z-10 text-center w-[90%] mx-auto text-red-600 md:top-[15vh] tracking-tight opacity-80">
+          STILL<br>LOCKED
+        </div>
+      )}
+      
+      <Canvas />
+      <CryptoTable data={cryptoData} />
+    </div>
+  </section>
+
+  <!-- Planet Navigation -->
+  <div class="relative -mt-32 z-10">
+    <MainNavigation />
+  </div>
+
+  <!-- Community Section -->
+  <section id="community">
+    <CommunitySection />
+  </section>
+
+  <!-- Roadmap Section -->
+  <section id="roadmap">
+    <RoadmapSection />
+  </section>
+</div>
+
+<style>
+  :global(html) {
+    scroll-behavior: smooth;
+    scroll-padding-top: 4rem;
+  }
+  
+  .locked-indicator {
+    text-shadow: 
+      0 0 10px rgba(255, 0, 0, 0.7),
+      0 0 20px rgba(255, 0, 0, 0.5),
+      0 0 30px rgba(255, 0, 0, 0.3);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.8;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  
+  /* Make sure sections can be scrolled to */
+  section {
+    scroll-margin-top: 4rem;
+  }
+</style>
