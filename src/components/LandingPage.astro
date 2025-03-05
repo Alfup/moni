@@ -28,6 +28,11 @@ const { cryptoData, displayTitle, colo } = Astro.props;
     </p>
   </div>
 
+  <!-- Community Section -->
+  <section id="community">
+    <CommunitySection />
+  </section>
+
   <!-- Planet Viewer Section -->
   <section id="planets" class="relative h-screen">
     <div class="absolute inset-0 border border-space-silver/20 backdrop-blur-sm rounded-lg m-4">
@@ -50,11 +55,6 @@ const { cryptoData, displayTitle, colo } = Astro.props;
   <div class="relative -mt-32 z-10">
     <MainNavigation />
   </div>
-
-  <!-- Community Section -->
-  <section id="community">
-    <CommunitySection />
-  </section>
 
   <!-- Roadmap Section -->
   <section id="roadmap">
