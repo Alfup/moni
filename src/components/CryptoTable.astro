@@ -1,0 +1,326 @@
+---
+interface Props {
+  data: any;
+}
+
+const { data } = Astro.props;
+
+const formatNumber = (num: number, isPrice = false) => {
+  if (isPrice) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(num);
+  }
+
+  const absNum = Math.abs(num);
+  if (absNum >= 1e9) {
+    return `$${(num / 1e9).toFixed(2)}B`;
+  } else if (absNum >= 1e6) {
+    return `$${(num / 1e6).toFixed(2)}M`;
+  } else if (absNum >= 1e3) {
+    return `$${(num / 1e3).toFixed(2)}k`;
+  }
+  return `$${num.toFixed(2)}`;
+};
+
+const formatPercent = (num: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(num / 100);
+};
+---
+
+<div class="crypto-table" id="cryptoTable">
+  {data ? (
+    <table>
+      <tbody>
+        <tr>
+          <th>Price</th>
+          <td>{formatNumber(Number(data.price), true)}</td>
+        </tr>
+        <tr>
+          <th>Market Cap</th>
+          <td>{formatNumber(Number(data.marketCap))}</td>
+        </tr>
+        <tr>
+          <th>24h Volume</th>
+          <td>{formatNumber(Number(data["24hVolume"]))}</td>
+        </tr>
+        <tr>
+          <th>24h Change</th>
+          <td class={Number(data.change) >= 0 ? "positive" : "negative"}>
+            {formatPercent(Number(data.change))}
+          </td>
+        </tr>
+        <tr>
+          <th>Rank</th>
+          <td>#{data.rank}</td>
+        </tr>
+      </tbody>
+    </table>
+  ) : (
+    <div class="loading">Loading crypto data...</div>
+  )}
+</div>
+
+<script>
+  let currentTableStyles: CSSStyleDeclaration | null = null;
+
+  function captureTableStyles() {
+    const table = document.querySelector('.crypto-table');
+    if (table) {
+      currentTableStyles = window.getComputedStyle(table);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', captureTableStyles);
+
+  function updateCryptoTable(data: any) {
+    const table = document.querySelector('.crypto-table');
+    if (!table) return;
+
+    if (currentTableStyles) {
+      Object.assign((table as HTMLElement).style, {
+        position: 'fixed',
+        right: '2rem',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        background: 'rgba(0, 0, 0, 0.2)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        padding: '1rem',
+        color: 'white',
+        fontFamily: '"Bellefair", serif',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: '12px',
+        minWidth: '260px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.1)'
+      });
+    }
+
+    const formatNumber = (num: number, isPrice = false) => {
+      if (isPrice) {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(num);
+      }
+
+      const absNum = Math.abs(num);
+      if (absNum >= 1e9) {
+        return `$${(num / 1e9).toFixed(2)}B`;
+      } else if (absNum >= 1e6) {
+        return `$${(num / 1e6).toFixed(2)}M`;
+      } else if (absNum >= 1e3) {
+        return `$${(num / 1e3).toFixed(2)}k`;
+      }
+      return `$${num.toFixed(2)}`;
+    };
+
+    const formatPercent = (num: number) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'percent',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(num / 100);
+    };
+
+    if (!data) {
+      table.innerHTML = '<div class="loading">Loading crypto data...</div>';
+      return;
+    }
+
+    table.innerHTML = `
+      <table>
+        <tbody>
+          <tr>
+            <th>Price</th>
+            <td>${formatNumber(Number(data.price), true)}</td>
+          </tr>
+          <tr>
+            <th>Market Cap</th>
+            <td>${formatNumber(Number(data.marketCap))}</td>
+          </tr>
+          <tr>
+            <th>24h Volume</th>
+            <td>${formatNumber(Number(data["24hVolume"]))}</td>
+          </tr>
+          <tr>
+            <th>24h Change</th>
+            <td class="${Number(data.change) >= 0 ? "positive" : "negative"}">
+              ${formatPercent(Number(data.change))}
+            </td>
+          </tr>
+          <tr>
+            <th>Rank</th>
+            <td>#${data.rank}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+
+    const tableElement = table.querySelector('table');
+    if (tableElement) {
+      Object.assign((tableElement as HTMLElement).style, {
+        borderCollapse: 'separate',
+        borderSpacing: '0 0.25rem',
+        width: '100%'
+      });
+
+      tableElement.querySelectorAll('th, td').forEach(cell => {
+        Object.assign((cell as HTMLElement).style, {
+          padding: '0.35rem',
+          fontSize: '0.85rem',
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap'
+        });
+      });
+
+      tableElement.querySelectorAll('th').forEach(th => {
+        Object.assign((th as HTMLElement).style, {
+          color: 'rgba(255, 255, 255, 0.6)',
+          fontWeight: 'normal',
+          textAlign: 'left',
+          textTransform: 'uppercase',
+          fontSize: '0.75rem',
+          letterSpacing: '0.05em'
+        });
+      });
+
+      tableElement.querySelectorAll('td').forEach(td => {
+        Object.assign((td as HTMLElement).style, {
+          textAlign: 'right',
+          color: 'rgba(255, 255, 255, 0.9)',
+          fontFeatureSettings: '"tnum"',
+          fontVariantNumeric: 'tabular-nums'
+        });
+      });
+
+      tableElement.querySelectorAll('.positive').forEach(el => {
+        (el as HTMLElement).style.color = '#00f5c0';
+      });
+
+      tableElement.querySelectorAll('.negative').forEach(el => {
+        (el as HTMLElement).style.color = '#ff4976';
+      });
+    }
+  }
+
+  // Add to window object
+  (window as any).updateCryptoTable = updateCryptoTable;
+</script>
+
+<style>
+  .crypto-table {
+    position: fixed;
+    right: 2rem;
+    top: calc(50vh - 130px);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 1rem;
+    color: white;
+    font-family: "Bellefair", serif;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    min-width: 260px;
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    z-index: 30; /* Ensure it's above other elements */
+    
+    @media (max-width: 768px) {
+      display: none;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      padding: 1px;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0)
+      );
+      mask: linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                   linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+  }
+
+  .loading {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    padding: 1rem;
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0 0.25rem;
+    width: 100%;
+    
+    th, td {
+      padding: 0.35rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    th {
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: normal;
+      text-align: left;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      text-align: right;
+      color: rgba(255, 255, 255, 0.9);
+      font-feature-settings: '"tnum"';
+      font-variant-numeric: tabular-nums;
+    }
+
+    tr {
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+
+        th {
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        td {
+          color: rgba(255, 255, 255, 1);
+        }
+      }
+    }
+  }
+
+  .positive {
+    color: #00f5c0 !important;
+  }
+
+  .negative {
+    color: #ff4976 !important;
+  }
+</style>

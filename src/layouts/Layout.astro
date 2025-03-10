@@ -1,0 +1,144 @@
+---
+interface Props {
+   title: string;
+   description: string;
+}
+
+const { description } = Astro.props;
+const slug = Astro.url.pathname.replace(/\/$/, "").split("/").at(-1);
+const fullTitle = `UAP.money`;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <link rel="icon" type="image/png" href="/logo2.png" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+      <meta name="theme-color" content="#E5E7EB" media="(prefers-color-scheme: light)" />
+      <title>{fullTitle}</title>
+      <meta property="og:title" content={fullTitle} />
+      <meta name="description" content={description} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={`/${slug}.jpg`} />
+      <meta property="og:url" content={`/${slug}`} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:creator" content="@jsulpis" />
+      <meta name="twitter:site" content="@jsulpis" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+   </head>
+   <body>
+      <slot />
+   </body>
+</html>
+
+<style is:global>
+   :root {
+      --tp-base-background-color: hsla(230, 20%, 8%, 0.8);
+      --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
+      --tp-button-background-color: hsla(230, 10%, 80%, 1);
+      --tp-button-background-color-active: hsla(230, 10%, 95%, 1);
+      --tp-button-background-color-focus: hsla(230, 10%, 90%, 1);
+      --tp-button-background-color-hover: hsla(230, 10%, 85%, 1);
+      --tp-button-foreground-color: hsla(230, 20%, 11%, 1);
+      --tp-container-background-color: hsla(230, 25%, 14%, 0.8);
+      --tp-container-background-color-active: hsla(230, 25%, 31%, 0.8);
+      --tp-container-background-color-focus: hsla(230, 25%, 26%, 0.5);
+      --tp-container-background-color-hover: hsla(230, 25%, 21%, 0.4);
+      --tp-container-foreground-color: hsla(230, 10%, 90%, 1);
+      --tp-groove-foreground-color: hsla(230, 20%, 8%, 1);
+      --tp-input-background-color: hsla(230, 20%, 8%, 0.3);
+      --tp-input-background-color-active: hsla(230, 28%, 23%, 0.6);
+      --tp-input-background-color-focus: hsla(230, 28%, 18%, 0.5);
+      --tp-input-background-color-hover: hsla(230, 20%, 13%, 0.4);
+      --tp-input-foreground-color: hsla(230, 10%, 80%, 0.7);
+      --tp-label-foreground-color: hsla(230, 12%, 68%, 1);
+      --tp-monitor-background-color: hsla(230, 20%, 8%, 0.3);
+      --tp-monitor-foreground-color: hsla(230, 12%, 48%, 1);
+   }
+
+   html,
+   body {
+      height: 100%;
+      overscroll-behavior: none;
+     max-width: 100vw;
+     overflow-x: hidden;
+   }
+
+   * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+   }
+
+   html {
+      font-size: 120%;
+   }
+
+   @media (prefers-color-scheme: dark) {
+      html {
+         color-scheme: dark;
+      }
+      body {
+         background: rgb(26, 26, 26);
+         color: #D1D5DB;
+      }
+   }
+
+   @media (prefers-color-scheme: light) {
+      html {
+         color-scheme: light;
+      }
+      body {
+         background: #E5E7EB;
+         color: #1a1a1a;
+      }
+   }
+
+   body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 300;
+      letter-spacing: -0.025em;
+      overflow-y: auto !important;
+     overflow-x: hidden !important;
+      position: relative !important;
+      width: 100%;
+      -webkit-overflow-scrolling: touch; /* Enable momentum scrolling on iOS */
+   }
+
+   a {
+      color: currentColor;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+   }
+
+   a:hover {
+      opacity: 1;
+   }
+
+   h1, h2, h3, h4, h5, h6 {
+      font-weight: 400;
+      letter-spacing: -0.05em;
+   }
+
+   .tp-dfwv {
+      z-index: 2;
+   }
+
+   @media (max-width: 768px) {
+      .tp-dfwv {
+         transform: scale(0.9);
+         transform-origin: top right;
+      }
+   }
+
+   canvas {
+      transition: opacity 0.3s ease-out;
+   }
+</style>

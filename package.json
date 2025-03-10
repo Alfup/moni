@@ -1,0 +1,35 @@
+{
+   "name": "realtime-planet-shader",
+   "version": "0.0.0",
+   "private": true,
+   "type": "module",
+   "scripts": {
+      "build": "astro check && astro build",
+      "dev": "astro dev",
+      "preview": "astro preview",
+      "serve": "pnpm build && pnpm preview"
+   },
+   "dependencies": {
+      "@astrojs/tailwind": "^5.1.0",
+      "@supabase/supabase-js": "^2.39.3",
+      "framer-motion": "^11.0.3",
+      "tailwindcss": "^3.4.1"
+   },
+   "devDependencies": {
+      "@astrojs/check": "0.3.1",
+      "@tweakpane/core": "2.0.0",
+      "@types/node": "20.8.3",
+      "astro": "3.4.4",
+      "four": "npm:fourwastaken@0.2.0",
+      "sass": "1.66.1",
+      "tweakpane": "4.0.0",
+      "typescript": "5.1.6",
+      "vite": "4.4.9",
+      "vite-plugin-glsl": "1.1.2"
+   },
+   "pnpm": {
+      "patchedDependencies": {
+         "fourwastaken@0.2.0": "patches/fourwastaken@0.2.0.patch"
+      }
+   }
+}

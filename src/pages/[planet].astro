@@ -1,0 +1,395 @@
+---
+import Layout from "../layouts/Layout.astro";
+import LandingPage from "../components/LandingPage.astro";
+import Footer from "../components/Footer.astro";
+import { planets } from "../config/planets";
+import { getCryptoData } from "../lib/crypto";
+
+export function getStaticPaths() {
+  return Object.keys(planets).map(planet => ({
+    params: { planet },
+    props: { config: planets[planet] }
+  }));
+}
+
+const { planet } = Astro.params;
+const { config } = Astro.props;
+
+let cryptoData = await getCryptoData(planet || "");
+
+// Map short names to full names
+const fullNames: Record<string, string> = {
+  'arb': 'Arbitrum',
+  'base': 'Base',
+  'bsc': 'Binance Smart Chain',
+  'eth': 'Ethereum',
+  'mult': 'MultiversX',
+  'pol': 'Polygon',
+  'sol': 'Solana',
+  'tron': 'Tron'
+};
+
+const displayTitle = fullNames[planet?.toLowerCase() || ""] || config.name;
+---
+
+<Layout title={config.name} description={`An artistic view of ${config.name} from space.`}> 
+  <LandingPage cryptoData={cryptoData} displayTitle={displayTitle} colo={config.colo}>
+    <Footer slot="footer" />
+  </LandingPage>
+</Layout>
+
+<script>
+import { useGlslCanvas } from "../webgl/renderer";
+import vertexShader from "../webgl/shaders/vertex.glsl";
+import fragmentShader from "../webgl/shaders/planet.fragment.glsl";
+import { loadTextures } from "../webgl/loaders/texture.loader";
+import { defaultUniforms } from "../webgl/settings/uniforms";
+import { setupControls } from "../controls/setup";
+import { planets } from "../config/planets";
+import { getCryptoData } from "../lib/crypto";
+import type { CustomUniforms } from "../webgl/settings/uniforms";
+
+let currentCanvas: HTMLCanvasElement | null = null;
+let currentUniforms: CustomUniforms | null = null;
+let textureCache = new Map();
+let currentPlanetKey = '';
+let nextPlanetKey = '';
+let isRotating = false;
+let rotationAngle = 0;
+let newTexture: any = null;
+// We're keeping this variable for future use
+let atmosphereChanged = false;
+let touchStartX = 0;
+let touchStartY = 0;
+let isSwiping = false;
+let lastTouchTime = 0;
+let touchMoveCount = 0;
+
+// Map short names to full names
+const fullNames: Record<string, string> = {
+  'arb': 'Arbitrum',
+  'base': 'Base',
+  'bsc': 'Binance Smart Chain',
+  'eth': 'Ethereum',
+  'mult': 'MultiversX',
+  'pol': 'Polygon',
+  'sol': 'Solana',
+  'tron': 'Tron'
+};
+
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function updateNavigation(planetKey: string): void {
+  const routeNames = ["ARB", "BASE", "BSC", "ETH", "MULT", "POL", "SOL", "TRON"];
+  const currentIndex = routeNames.findIndex(route => 
+    route.toLowerCase() === planetKey.toLowerCase()
+  );
+  
+  const totalItems = routeNames.length;
+  const halfItems = Math.floor(totalItems / 2);
+
+  document.querySelectorAll('.nav-item').forEach((item, i) => {
+    let distance = i - currentIndex;
+    let adjustedIndex = distance;
+    
+    if (distance > halfItems) {
+      adjustedIndex = distance - totalItems;
+    } else if (distance < -halfItems) {
+      adjustedIndex = distance + totalItems;
+    }
+    
+    (item as HTMLElement).style.setProperty('--index', String(adjustedIndex));
+    const link = item.querySelector('a');
+    if (link) {
+      link.style.setProperty('--distance', String(Math.abs(adjustedIndex)));
+      if (link.getAttribute('href') === `/${planetKey.toLowerCase()}`) {
+        link.setAttribute('aria-current', 'page');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    }
+  });
+}
+
+async function loadPlanetTexture(planetKey: string) {
+  if (textureCache.has(planetKey)) {
+    return textureCache.get(planetKey);
+  }
+
+  const config = planets[planetKey as keyof typeof planets];
+  const [texture] = await loadTextures([{ path: config.texturePath }]);
+  
+  if (textureCache.size >= 2) {
+    for (const [key] of textureCache) {
+      if (key !== currentPlanetKey && key !== nextPlanetKey) {
+        textureCache.delete(key);
+        break;
+      }
+    }
+  }
+  
+  textureCache.set(planetKey, texture);
+  return texture;
+}
+
+async function rotateCameraView(targetAngle: number, duration: number, config: any, onComplete?: () => void) {
+  const startTime = performance.now();
+  const startAngle = rotationAngle;
+  const angleDistance = targetAngle - startAngle;
+
+  function animate() {
+    const currentTime = performance.now();
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = easeInOutCubic(progress);
+    
+    rotationAngle = startAngle + angleDistance * easedProgress;
+    
+    // Update camera view matrix
+    const radians = rotationAngle * Math.PI / 180;
+    if (currentUniforms) {
+      currentUniforms.uCameraView = [
+        Math.cos(radians), 0, -Math.sin(radians),
+        0, 1, 0,
+        Math.sin(radians), 0, Math.cos(radians)
+      ];
+    }
+
+    // Change atmosphere and texture at 180 degrees if not done yet
+    if (!atmosphereChanged && Math.abs(rotationAngle) >= 180) {
+      if (currentUniforms) {
+        currentUniforms.uAtmosphereColor = config.atmosphere.color;
+        currentUniforms.uAtmosphereDensity = config.atmosphere.density;
+        currentUniforms.uBumpStrength = config.bumpStrength || 0.01;
+      }
+      atmosphereChanged = true;
+      
+      // Change texture immediately after atmosphere
+      if (currentUniforms) {
+        currentUniforms.uPlanetColor = newTexture;
+      }
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      isRotating = false;
+      if (onComplete) onComplete();
+    }
+  }
+
+  isRotating = true;
+  atmosphereChanged = false;
+  requestAnimationFrame(animate);
+}
+
+async function initPlanet(planetKey: string) {
+  // Skip if trying to load the current planet or if a transition is in progress
+  if (planetKey === currentPlanetKey || isRotating) return;
+
+  const config = planets[planetKey as keyof typeof planets];
+  if (!config) return;
+
+  nextPlanetKey = planetKey;
+  newTexture = await loadPlanetTexture(planetKey);
+
+  if (!currentCanvas) {
+    const result = useGlslCanvas({
+      vertex: vertexShader,
+      fragment: fragmentShader,
+      uniforms: {
+        ...defaultUniforms,
+        uPlanetRadius: 1,
+        uRotationSpeed: 5,
+        uPlanetPosition: [0, 0, -10],
+        uCameraPosition: [0, 0, 6],
+        uCameraView: [1, 0, 0, 0, 1, 0, 0, 0, 1], // Identity matrix
+        uAtmosphereColor: config.atmosphere.color,
+        uAtmosphereDensity: config.atmosphere.density,
+        uBumpStrength: config.bumpStrength || 0.01,
+        uQuality: Math.min(window.devicePixelRatio, 2),
+        uPlanetColor: newTexture
+      },
+    });
+    currentCanvas = result.canvas;
+    currentUniforms = result.uniforms;
+    (currentCanvas as any).__uniforms = currentUniforms;
+    setupControls({ canvas: currentCanvas, uniforms: currentUniforms });
+    currentPlanetKey = planetKey;
+  } else {
+    // Determine rotation direction based on planet positions
+    const planetKeys = Object.keys(planets);
+    const currentIndex = planetKeys.indexOf(currentPlanetKey);
+    const targetIndex = planetKeys.indexOf(planetKey);
+    const totalPlanets = planetKeys.length;
+    
+    let clockwise = false;
+    if (targetIndex > currentIndex) {
+      clockwise = targetIndex - currentIndex <= totalPlanets / 2;
+    } else {
+      clockwise = currentIndex - targetIndex > totalPlanets / 2;
+    }
+
+    await rotateCameraView(clockwise ? 360 : -360, 2000, config, () => {
+      // Reset rotation angle and view matrix
+      rotationAngle = 0;
+      if (currentUniforms) {
+        currentUniforms.uCameraView = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+      }
+      currentPlanetKey = planetKey;
+    });
+  }
+
+  // Update navigation before updating other UI elements
+  updateNavigation(planetKey);
+
+  document.title = `UAP.money`;
+  
+  // Update planet title in the new location
+  const displayTitle = fullNames[planetKey.toLowerCase()] || config.name;
+  const titleElement = document.querySelector('.planet-title');
+  if (titleElement) {
+    titleElement.textContent = displayTitle;
+  }
+  
+  // Update LOCKED indicator based on colo status
+  const lockedIndicator = document.querySelector('.locked-indicator');
+  if (config.colo === "no") {
+    if (!lockedIndicator) {
+      const planetSection = document.querySelector('#planets .absolute');
+      if (planetSection) {
+        const newLockedIndicator = document.createElement('div');
+        newLockedIndicator.className = 'locked-indicator absolute left-1/2 -translate-x-1/2 top-[max(15vh,calc(50%-1em-30vmin))] text-[clamp(3.5rem,6vw+2rem,8rem)] font-bold z-10 text-center w-[90%] mx-auto text-red-600 md:top-[15vh] tracking-tight opacity-80';
+        newLockedIndicator.innerHTML = 'STILL<br>LOCKED';
+        newLockedIndicator.style.textShadow = '0 0 10px rgba(255, 0, 0, 0.7), 0 0 20px rgba(255, 0, 0, 0.5), 0 0 30px rgba(255, 0, 0, 0.3)';
+        newLockedIndicator.style.animation = 'pulse 2s infinite';
+        planetSection.appendChild(newLockedIndicator);
+      }
+    }
+  } else if (lockedIndicator) {
+    lockedIndicator.remove();
+  }
+
+  const cryptoData = await getCryptoData(planetKey);
+  if (cryptoData && (window as any).updateCryptoTable) {
+    (window as any).updateCryptoTable(cryptoData);
+  }
+}
+
+function navigatePlanet(direction: number) {
+  if (isRotating) return;
+  
+  const planetKeys = Object.keys(planets);
+  const currentIndex = planetKeys.indexOf(currentPlanetKey);
+  let nextIndex = currentIndex + direction;
+  
+  // Handle wrapping around
+  if (nextIndex >= planetKeys.length) nextIndex = 0;
+  if (nextIndex < 0) nextIndex = planetKeys.length - 1;
+  
+  const nextPlanet = planetKeys[nextIndex];
+  history.pushState({}, '', `/${nextPlanet}`);
+  initPlanet(nextPlanet);
+}
+
+// Setup touch events for mobile swipe navigation
+function setupTouchNavigation() {
+  const planetSection = document.querySelector('#planets');
+  if (!planetSection) return;
+
+  planetSection.addEventListener('touchstart', (e) => {
+    const touchEvent = e as TouchEvent;
+    touchStartX = touchEvent.touches[0].clientX;
+    touchStartY = touchEvent.touches[0].clientY;
+    isSwiping = false;
+    lastTouchTime = Date.now();
+    touchMoveCount = 0;
+  }, { passive: true });
+
+  planetSection.addEventListener('touchmove', (e) => {
+    const touchEvent = e as TouchEvent;
+    if (isRotating) return;
+    
+    const touchX = touchEvent.touches[0].clientX;
+    const touchY = touchEvent.touches[0].clientY;
+    const deltaX = touchX - touchStartX;
+    const deltaY = touchY - touchStartY;
+    touchMoveCount++;
+    
+    // Only prevent default for clearly horizontal swipes
+    // This is the key change - we're being much more selective about when to prevent scrolling
+    if (Math.abs(deltaX) > Math.abs(deltaY) * 2.5 && Math.abs(deltaX) > 50) {
+      // This is clearly a horizontal swipe, prevent scrolling
+      isSwiping = true;
+      
+      // Only prevent default if we're confident this is a horizontal swipe
+      // and not just a diagonal scroll attempt
+      if (touchMoveCount > 3) {
+        e.preventDefault();
+      }
+    }
+  }, { passive: false });
+
+  planetSection.addEventListener('touchend', (e) => {
+    const touchEvent = e as TouchEvent;
+    if (!isSwiping || isRotating) return;
+    
+    const touchEndX = touchEvent.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+    const swipeTime = Date.now() - lastTouchTime;
+    
+    // Determine swipe direction - require faster, more deliberate swipes
+    if (Math.abs(deltaX) > 80 && swipeTime < 300) { // Stricter swipe detection
+      if (deltaX > 0) {
+        navigatePlanet(-1); // Swipe right = previous planet
+      } else {
+        navigatePlanet(1); // Swipe left = next planet
+      }
+    }
+    
+    isSwiping = false;
+  }, { passive: true });
+}
+
+(window as any).__initPlanet = initPlanet;
+
+const initialPlanet = window.location.pathname.split('/').pop() || 'pol';
+initPlanet(initialPlanet);
+
+// Setup event listeners after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  setupTouchNavigation();
+});
+
+document.addEventListener('click', async (e) => {
+  if (!e.target) return;
+  
+  const link = (e.target as HTMLElement).closest('a');
+  if (link && link.getAttribute('href')?.startsWith('/')) {
+    e.preventDefault();
+    const planetKey = link.getAttribute('href')?.split('/').pop() || '';
+    
+    // Skip if clicking the current planet
+    if (planetKey === currentPlanetKey) return;
+    
+    await initPlanet(planetKey);
+    history.pushState({}, '', link.href);
+  }
+});
+
+// Add keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') {
+    navigatePlanet(-1);
+  } else if (e.key === 'ArrowRight') {
+    navigatePlanet(1);
+  }
+});
+
+window.addEventListener('popstate', async () => {
+  const planetKey = window.location.pathname.split('/').pop() || 'pol';
+  await initPlanet(planetKey);
+});
+</script>

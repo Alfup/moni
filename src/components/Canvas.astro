@@ -1,0 +1,90 @@
+<canvas></canvas>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.querySelector('canvas');
+  if (!canvas) return;
+
+  // Create a MutationObserver to watch for canvas changes
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        if (canvas.classList.contains('loaded')) {
+          addWatermark(canvas);
+        }
+      }
+    });
+  });
+
+  observer.observe(canvas, { attributes: true });
+  
+  // Also set up immediately if canvas is already loaded
+  if (canvas.classList.contains('loaded')) {
+    addWatermark(canvas);
+  }
+});
+
+function addWatermark(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // Store the original draw function
+  const originalDraw = (canvas as any).__draw;
+  
+  // Override the draw function to add watermark
+  (canvas as any).__draw = (...args: any[]) => {
+    // Call original draw first
+    originalDraw?.apply(canvas, args);
+    
+    // Add watermark
+    ctx.save();
+    
+    // Add diagonal watermark
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.font = `${Math.max(20, canvas.width / 20)}px Inter`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.rotate(-Math.PI/4);
+    ctx.fillText('UAP.money', 0, 0);
+    
+    // Add small watermark in bottom right
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.font = `${Math.max(12, canvas.width / 40)}px Inter`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('UAP.money', canvas.width - 10, canvas.height - 10);
+    
+    // Request next frame
+    requestAnimationFrame(() => (canvas as any).__draw?.());
+  };
+
+  // Start the animation loop if not already running
+  if (!(canvas as any).__animating) {
+    (canvas as any).__animating = true;
+    (canvas as any).__draw();
+  }
+}
+</script>
+
+<style lang="scss">
+   canvas {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      user-select: none;
+      touch-action: manipulation; /* Changed from 'none' to 'manipulation' to allow scrolling */
+      opacity: 0;
+      position: absolute; /* Make canvas absolute to allow scrolling behind it */
+      top: 0;
+      left: 0;
+      pointer-events: none; /* Allow interactions to pass through to elements behind */
+
+      &.loaded {
+         opacity: 1;
+         transition: opacity 0.5s ease-out;
+         pointer-events: auto; /* Re-enable interactions when loaded */
+      }
+   }
+</style>
