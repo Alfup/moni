@@ -35,8 +35,8 @@ const { cryptoData, displayTitle, colo } = Astro.props;
   </section>
 
   <!-- Planet Viewer Section -->
-  <section id="planets" class="relative h-[100vh] w-full overflow-hidden z-10">
-    <div class="absolute inset-x-2 inset-y-4 border-4 border-space-silver/30 backdrop-blur-sm rounded-lg overflow-hidden">
+  <section id="planets" class="relative h-[100vh] w-[100vw] overflow-hidden z-10 px-2">
+    <div class="absolute inset-y-4 left-0 right-0 border-4 border-space-silver/30 backdrop-blur-sm rounded-lg overflow-hidden">
       <div class="absolute inset-0 bg-black/10 z-0"></div>
       <div class="planet-title absolute left-1/2 -translate-x-1/2 top-[max(6vh,calc(50%-1em-45vmin))] text-[clamp(1.75rem,3vw+1rem,4rem)] font-normal z-10 text-center w-[90%] mx-auto bg-gradient-to-t from-[hsl(0,0%,20%)] to-white to-120% bg-clip-text text-transparent [text-shadow:0_0_0.8ch_hsla(0,0%,100%,0.35)] md:top-[5vh] tracking-tight">
         {displayTitle}
