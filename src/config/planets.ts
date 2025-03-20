@@ -9,7 +9,7 @@ export const planets: Record<string, PlanetConfig> = {
       color: [0.5, 0.5, 0.5],
       density: 0.2
     },
-    colo: "no"
+    colo: "yes"
   },
   base: {
     name: 'BASE',
@@ -19,7 +19,7 @@ export const planets: Record<string, PlanetConfig> = {
       color: [0.0, 0.1, 0.8],
       density: 0.2
     },
-    colo: "no"
+    colo: "yes"
   },
   bsc: {
     name: 'BSC',
@@ -29,7 +29,7 @@ export const planets: Record<string, PlanetConfig> = {
       color: [1.0, 1.0, 0.0],
       density: 0.2
     },
-    colo: "no"
+    colo: "yes"
   },
   eth: {
     name: 'ETH',
@@ -39,7 +39,7 @@ export const planets: Record<string, PlanetConfig> = {
       color: [1.0, 1.0, 1.0],
       density: 0.2
     },
-    colo: "no"
+    colo: "yes"
   },
   mult: {
     name: 'MULT',
@@ -49,7 +49,7 @@ export const planets: Record<string, PlanetConfig> = {
       color: [0.0, 0.8, 1.0],
       density: 0.2
     },
-    colo: "no" // Set to "no" for MULT as requested
+    colo: "yes" // Set to "no" for MULT as requested
   },
   pol: {
     name: 'POL',
@@ -79,6 +79,6 @@ export const planets: Record<string, PlanetConfig> = {
       color: [1.0, 0.0, 0.0],
       density: 0.2
     },
-    colo: "no"
+    colo: "yes"
   }
 };
