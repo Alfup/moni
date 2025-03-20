@@ -69,7 +69,7 @@ export const planets: Record<string, PlanetConfig> = {
       color: [1.0, 0.8, 0.9],
       density: 0.2
     },
-    colo: "no"
+    colo: "yes"
   },
   tron: {
     name: 'TRON',
